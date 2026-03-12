@@ -19,6 +19,80 @@
       --line: rgba(45, 30, 18, 0.16);
     }
 
+    /* ── Compass ────────────────────────────────── */
+    .compass-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 0 2px;
+    }
+
+    .compass {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--line);
+      background: radial-gradient(circle at 50% 50%, #fff8ed, var(--bg-1));
+      box-shadow: 0 2px 8px rgba(45,30,18,0.12);
+    }
+
+    .compass.locked { filter: grayscale(0.6); opacity: 0.45; }
+
+    .compass-dir {
+      position: absolute;
+      font-size: 0.7rem;
+      font-weight: 700;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .compass-n { top: 4px; left: 50%; transform: translateX(-50%); color: var(--ink-soft); }
+    .compass-s { bottom: 4px; left: 50%; transform: translateX(-50%); color: var(--ink-soft); }
+    .compass-e { right: 5px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+    .compass-w { left: 5px; top: 50%; transform: translateY(-50%); color: var(--ink-soft); }
+
+    .compass-needle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 60px;
+      margin-left: -3px;
+      margin-top: -30px;
+      transform-origin: center 30px;
+    }
+
+    .compass-needle-n {
+      width: 100%;
+      height: 50%;
+      background: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    .compass-needle-s {
+      width: 100%;
+      height: 50%;
+      background: #999;
+      border-radius: 0 0 3px 3px;
+    }
+
+    .compass-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 10px; height: 10px;
+      background: var(--ink);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .compass-rate {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -35,14 +109,16 @@
       display: flex;
       justify-content: center;
       padding: 24px 16px 40px;
+      overflow: hidden;
     }
 
     .shell {
       width: min(1100px, 100%);
+      height: calc(100vh - 64px);
       display: grid;
       gap: 16px;
       grid-template-columns: 1.15fr 0.85fr;
-      align-items: start;
+      align-items: stretch;
     }
 
     .card {
@@ -57,6 +133,10 @@
       padding: 22px;
       display: grid;
       gap: 16px;
+      position: sticky;
+      top: 0;
+      max-height: 100%;
+      overflow-y: auto;
     }
 
     .title {
@@ -135,6 +215,8 @@
       padding: 16px;
       display: grid;
       gap: 12px;
+      max-height: 100%;
+      overflow-y: auto;
     }
 
     .upgrades-title {
@@ -221,8 +303,20 @@
     }
 
     @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
       .shell {
+        height: auto;
         grid-template-columns: 1fr;
+      }
+
+      .main,
+      .side {
+        position: static;
+        max-height: none;
+        overflow: visible;
       }
 
       .click-zone {
@@ -319,6 +413,33 @@
         </div>
         <div class="cost" id="boatCooldown">冷卻：未解鎖</div>
       </article>
+
+      <article class="upgrade">
+        <div class="upgrade-head">
+          <div class="upgrade-name">借東風</div>
+          <div class="upgrade-lv" id="windLv">未解鎖</div>
+        </div>
+        <p class="upgrade-desc" id="windDesc">指南針指向東方時最快（基礎 2000/秒），指向西方時最慢（基礎 500/秒）。</p>
+        <div class="compass-wrap">
+          <div class="compass locked" id="compassEl">
+            <span class="compass-dir compass-n">北</span>
+            <span class="compass-dir compass-s">南</span>
+            <span class="compass-dir compass-e">東</span>
+            <span class="compass-dir compass-w">西</span>
+            <div class="compass-needle" id="compassNeedle">
+              <div class="compass-needle-n"></div>
+              <div class="compass-needle-s"></div>
+            </div>
+            <div class="compass-center"></div>
+          </div>
+          <div class="compass-rate" id="compassRate">等待解鎖</div>
+        </div>
+        <div class="action-row">
+          <button id="unlockWindBtn" class="btn" type="button">解鎖 100000</button>
+          <button id="upgradeWindBtn" class="btn secondary" type="button" disabled>升級東風</button>
+          <div class="cost" id="windCost"></div>
+        </div>
+      </article>
     </aside>
   </main>
 
@@ -332,12 +453,18 @@
       lusuLevel: 1,
       boatUnlocked: false,
       boatLevel: 1,
+      windUnlocked: false,
+      windLevel: 1,
+      compassAngle: 0,
+      compassTargetAngle: Math.random() * 360,
+      compassChangeTimer: 2000 + Math.random() * 4000,
+      windAccumulator: 0,
       startTime: Date.now(),
       firstMilestoneMs: null,
       zhaoAccumulatorMs: 0,
       lusuAccumulatorMs: 0,
       boatCooldownMs: 0,
-      lastTickMs: Date.now()
+      lastTickMs: performance.now()
     };
 
     const EL = {
@@ -367,14 +494,25 @@
       unlockBoatBtn: document.getElementById("unlockBoatBtn"),
       upgradeBoatBtn: document.getElementById("upgradeBoatBtn"),
       useBoatBtn: document.getElementById("useBoatBtn"),
-      boatCooldown: document.getElementById("boatCooldown")
+      boatCooldown: document.getElementById("boatCooldown"),
+      windLv: document.getElementById("windLv"),
+      windDesc: document.getElementById("windDesc"),
+      windCost: document.getElementById("windCost"),
+      unlockWindBtn: document.getElementById("unlockWindBtn"),
+      upgradeWindBtn: document.getElementById("upgradeWindBtn"),
+      compassNeedle: document.getElementById("compassNeedle"),
+      compassEl: document.getElementById("compassEl"),
+      compassRate: document.getElementById("compassRate")
     };
 
-    const unlockCosts = {
+    const UNLOCK_COSTS = {
       zhao: 1000,
       lusu: 5000,
-      boat: 20000
+      boat: 20000,
+      wind: 100000
     };
+    // legacy alias
+    const unlockCosts = UNLOCK_COSTS;
 
     function roundCost(value) {
       return Math.round(value);
@@ -408,8 +546,19 @@
       return { min, max };
     }
 
+    function getWindRate() {
+      if (!state.windUnlocked) return 0;
+      const L = state.windLevel;
+      const maxRate = 2000 + (L - 1) * 2000;
+      const minRate = 500 + (L - 1) * 500;
+      const rad = state.compassAngle * Math.PI / 180;
+      const mid = (maxRate + minRate) / 2;
+      const amp = (maxRate - minRate) / 2;
+      return mid + amp * Math.cos(rad);
+    }
+
     function averageEPS() {
-      return zhaoPerSecond() + lusuPerCycle() / 3;
+      return zhaoPerSecond() + lusuPerCycle() / 3 + getWindRate();
     }
 
     function afford(cost) {
@@ -421,7 +570,7 @@
     }
 
     function gain(amount) {
-      state.arrows += amount;
+      state.arrows += Math.floor(amount);
       checkMilestone();
     }
 
@@ -454,7 +603,7 @@
       EL.arrows.textContent = formatNumber(state.arrows);
       EL.clickPower.textContent = formatNumber(clickPower());
       EL.clickPowerInline.textContent = formatNumber(clickPower());
-      EL.eps.textContent = formatNumber(averageEPS());
+      EL.eps.textContent = averageEPS().toLocaleString("zh-Hant-TW", { maximumFractionDigits: 1 });
       EL.milestone.textContent =
         state.firstMilestoneMs === null ? "尚未達成" : formatElapsed(state.firstMilestoneMs);
 
@@ -517,6 +666,32 @@
         EL.useBoatBtn.disabled = true;
         EL.boatCooldown.textContent = "冷卻：未解鎖";
       }
+
+      // Wind / compass
+      if (state.windUnlocked) {
+        const cost = formulaCost(100000, state.windLevel);
+        const L = state.windLevel;
+        const maxRate = 2000 + (L - 1) * 2000;
+        const minRate = 500 + (L - 1) * 500;
+        EL.windLv.textContent = `等級 ${state.windLevel}`;
+        EL.windDesc.textContent = `東風最快 ${formatNumber(maxRate)}/秒，西風最慢 ${formatNumber(minRate)}/秒。`;
+        EL.windCost.textContent = `升級費用：${formatNumber(cost)}`;
+        EL.unlockWindBtn.disabled = true;
+        EL.unlockWindBtn.textContent = "已解鎖";
+        EL.upgradeWindBtn.disabled = !afford(cost);
+        EL.compassEl.classList.remove("locked");
+        EL.compassRate.textContent = `${getWindRate().toLocaleString("zh-Hant-TW", { maximumFractionDigits: 1 })} 箭/秒`;
+      } else {
+        EL.windLv.textContent = "未解鎖";
+        EL.windCost.textContent = `解鎖費用：${formatNumber(UNLOCK_COSTS.wind)}`;
+        EL.unlockWindBtn.disabled = !afford(UNLOCK_COSTS.wind);
+        EL.upgradeWindBtn.disabled = true;
+        EL.compassEl.classList.add("locked");
+        EL.compassRate.textContent = "等待解鎖";
+      }
+
+      // Compass needle: game angle 0=East → CSS rotate(90deg) for north-up needle
+      EL.compassNeedle.style.transform = `rotate(${(state.compassAngle + 90) % 360}deg)`;
     }
 
     function getRandomIntInclusive(min, max) {
@@ -632,15 +807,94 @@
       gain(loot);
       state.boatCooldownMs = 10000;
       setMessage(`草船成功借箭，獲得 ${formatNumber(loot)}。`, false);
+      saveGame();
       updateUI();
     });
+
+    EL.unlockWindBtn.addEventListener("click", () => {
+      if (state.windUnlocked) return;
+      if (!afford(UNLOCK_COSTS.wind)) {
+        setMessage("箭矢不足，無法解鎖借東風。", true);
+        return;
+      }
+      spend(UNLOCK_COSTS.wind);
+      state.windUnlocked = true;
+      setMessage("借東風已啟動！", false);
+      saveGame();
+      updateUI();
+    });
+
+    EL.upgradeWindBtn.addEventListener("click", () => {
+      if (!state.windUnlocked) return;
+      const cost = formulaCost(100000, state.windLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級借東風。", true);
+        return;
+      }
+      spend(cost);
+      state.windLevel += 1;
+      setMessage("借東風升級成功。", false);
+      saveGame();
+      updateUI();
+    });
+
+    // ── localStorage save / load ──────────────────
+    const SAVE_KEY = "arrowMakerSave";
+
+    function saveGame() {
+      try {
+        const save = {
+          arrows: state.arrows,
+          clickLevel: state.clickLevel,
+          zhaoUnlocked: state.zhaoUnlocked, zhaoLevel: state.zhaoLevel,
+          lusuUnlocked: state.lusuUnlocked, lusuLevel: state.lusuLevel,
+          boatUnlocked: state.boatUnlocked, boatLevel: state.boatLevel,
+          windUnlocked: state.windUnlocked, windLevel: state.windLevel,
+          startTime: state.startTime,
+          firstMilestoneMs: state.firstMilestoneMs
+        };
+        localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+      } catch (e) {}
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (raw) {
+          const save = JSON.parse(raw);
+          const keys = [
+            "arrows", "clickLevel",
+            "zhaoUnlocked", "zhaoLevel",
+            "lusuUnlocked", "lusuLevel",
+            "boatUnlocked", "boatLevel",
+            "windUnlocked", "windLevel",
+            "startTime", "firstMilestoneMs"
+          ];
+          keys.forEach(k => { if (save[k] !== undefined) state[k] = save[k]; });
+        }
+      } catch (e) {}
+      // Gold-finger cheat: localStorage.setItem('arrows', '...')
+      try {
+        const cheat = localStorage.getItem("arrows");
+        if (cheat !== null) {
+          const v = parseInt(cheat, 10);
+          if (!isNaN(v) && v > 0) state.arrows = v;
+          localStorage.removeItem("arrows");
+        }
+      } catch (e) {}
+    }
+
+    setInterval(saveGame, 5000);
+    window.addEventListener("beforeunload", saveGame);
 
     function tick(nowMs) {
       const deltaMs = nowMs - state.lastTickMs;
       state.lastTickMs = nowMs;
+      // Cap delta to prevent massive catch-up on tab restore
+      const capped = Math.min(deltaMs, 1000);
 
       if (state.zhaoUnlocked) {
-        state.zhaoAccumulatorMs += deltaMs;
+        state.zhaoAccumulatorMs += capped;
         while (state.zhaoAccumulatorMs >= 1000) {
           gain(zhaoPerSecond());
           state.zhaoAccumulatorMs -= 1000;
@@ -648,7 +902,7 @@
       }
 
       if (state.lusuUnlocked) {
-        state.lusuAccumulatorMs += deltaMs;
+        state.lusuAccumulatorMs += capped;
         while (state.lusuAccumulatorMs >= 3000) {
           gain(lusuPerCycle());
           state.lusuAccumulatorMs -= 3000;
@@ -656,19 +910,41 @@
       }
 
       if (state.boatUnlocked && state.boatCooldownMs > 0) {
-        state.boatCooldownMs = Math.max(0, state.boatCooldownMs - deltaMs);
+        state.boatCooldownMs = Math.max(0, state.boatCooldownMs - capped);
+      }
+
+      // Compass: pick new random target periodically, then lerp toward it
+      state.compassChangeTimer -= capped;
+      if (state.compassChangeTimer <= 0) {
+        state.compassTargetAngle = Math.random() * 360;
+        state.compassChangeTimer = 3000 + Math.random() * 4000;
+      }
+      let diff = state.compassTargetAngle - state.compassAngle;
+      while (diff > 180) diff -= 360;
+      while (diff < -180) diff += 360;
+      const maxStep = 0.07 * capped;
+      const step = Math.max(-maxStep, Math.min(maxStep, diff));
+      state.compassAngle = (state.compassAngle + step + 360) % 360;
+
+      // Wind: continuous production proportional to compass direction
+      if (state.windUnlocked) {
+        state.windAccumulator += getWindRate() * capped / 1000;
+        if (state.windAccumulator >= 1) {
+          const whole = Math.floor(state.windAccumulator);
+          gain(whole);
+          state.windAccumulator -= whole;
+        }
       }
 
       updateUI();
       requestAnimationFrame(tick);
     }
 
+    loadGame();
     setMessage("戰局開始。", false);
     updateUI();
-    requestAnimationFrame((nowMs) => {
-      state.lastTickMs = nowMs;
-      tick(nowMs);
-    });
+    state.lastTickMs = performance.now();
+    requestAnimationFrame(tick);
   </script>
 </body>
 </html>
