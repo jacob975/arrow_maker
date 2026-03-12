@@ -1,10 +1,674 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-  <title>Arrow Maker</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>赤壁造箭 - Arrow Maker</title>
+  <style>
+    :root {
+      --bg-1: #f2e8cf;
+      --bg-2: #d8c3a5;
+      --ink: #2d1e12;
+      --ink-soft: #5a4633;
+      --panel: rgba(255, 250, 240, 0.84);
+      --primary: #9b2226;
+      --primary-dark: #7f1d1d;
+      --accent: #606c38;
+      --good: #386641;
+      --bad: #b42318;
+      --line: rgba(45, 30, 18, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(255, 255, 255, 0.5), transparent 60%),
+        radial-gradient(900px 500px at 100% 10%, rgba(155, 34, 38, 0.18), transparent 60%),
+        linear-gradient(140deg, var(--bg-1), var(--bg-2));
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 40px;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 8px 28px rgba(45, 30, 18, 0.08);
+    }
+
+    .main {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .stats {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .stat-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .label {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-bottom: 3px;
+    }
+
+    .value {
+      font-size: clamp(1.1rem, 2.6vw, 1.45rem);
+      font-weight: 700;
+    }
+
+    .click-zone {
+      border: 2px dashed rgba(155, 34, 38, 0.45);
+      border-radius: 18px;
+      min-height: 270px;
+      padding: 16px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(96, 108, 56, 0.17), transparent 60%),
+        rgba(255, 255, 255, 0.38);
+    }
+
+    .click-btn {
+      border: 0;
+      border-radius: 999px;
+      width: min(300px, 85vw);
+      height: 132px;
+      background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+      color: #fff7eb;
+      font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(127, 29, 29, 0.3);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .click-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(127, 29, 29, 0.36);
+    }
+
+    .click-btn:active {
+      transform: translateY(2px) scale(0.995);
+      box-shadow: 0 7px 14px rgba(127, 29, 29, 0.34);
+    }
+
+    .side {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .upgrades-title {
+      margin: 6px 4px 4px;
+      font-size: 1.05rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.02em;
+    }
+
+    .upgrade {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.62);
+      display: grid;
+      gap: 8px;
+    }
+
+    .upgrade-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .upgrade-name {
+      font-weight: 700;
+    }
+
+    .upgrade-lv {
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .upgrade-desc {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .btn.secondary {
+      background: #8a6f4e;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      filter: grayscale(0.3);
+    }
+
+    .cost {
+      font-size: 0.86rem;
+      color: var(--ink-soft);
+    }
+
+    .message {
+      min-height: 22px;
+      font-size: 0.9rem;
+      color: var(--good);
+      font-weight: 700;
+    }
+
+    .message.warn {
+      color: var(--bad);
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .click-zone {
+        min-height: 220px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello World!</h1>
-  <p>Make your arrow by clicking.</p>
+  <main class="shell">
+    <section class="card main">
+      <header>
+        <h1 class="title">赤壁造箭</h1>
+        <p class="subtitle">點擊造箭，升級軍備，看看多久能首次持有十萬隻箭。</p>
+      </header>
+
+      <section class="stats">
+        <article class="stat-item">
+          <div class="label">目前持有箭矢</div>
+          <div class="value" id="arrows">0</div>
+        </article>
+        <article class="stat-item">
+          <div class="label">每次點擊製造</div>
+          <div class="value" id="clickPower">1</div>
+        </article>
+        <article class="stat-item">
+          <div class="label">每秒平均產量</div>
+          <div class="value" id="eps">0</div>
+        </article>
+        <article class="stat-item">
+          <div class="label">首次達成 100000（持有）</div>
+          <div class="value" id="milestone">尚未達成</div>
+        </article>
+      </section>
+
+      <section class="click-zone">
+        <button id="makeArrowBtn" class="click-btn" type="button">放箭！<br>+<span id="clickPowerInline">1</span></button>
+      </section>
+      <div class="message" id="message" aria-live="polite"></div>
+    </section>
+
+    <aside class="card side">
+      <h2 class="upgrades-title">升級與技能</h2>
+
+      <article class="upgrade">
+        <div class="upgrade-head">
+          <div class="upgrade-name">點擊鍛造</div>
+          <div class="upgrade-lv" id="clickLv">等級 1</div>
+        </div>
+        <p class="upgrade-desc">每次升級，點擊額外 +1 箭。</p>
+        <div class="action-row">
+          <button id="upgradeClickBtn" class="btn" type="button">升級點擊</button>
+          <div class="cost" id="clickCost"></div>
+        </div>
+      </article>
+
+      <article class="upgrade">
+        <div class="upgrade-head">
+          <div class="upgrade-name">苦力趙雲</div>
+          <div class="upgrade-lv" id="zhaoLv">未解鎖</div>
+        </div>
+        <p class="upgrade-desc" id="zhaoDesc">解鎖後每秒結算一次，初始每次 +10。</p>
+        <div class="action-row">
+          <button id="unlockZhaoBtn" class="btn" type="button">解鎖 1000</button>
+          <button id="upgradeZhaoBtn" class="btn secondary" type="button" disabled>升級趙雲</button>
+          <div class="cost" id="zhaoCost"></div>
+        </div>
+      </article>
+
+      <article class="upgrade">
+        <div class="upgrade-head">
+          <div class="upgrade-name">濫好人魯肅</div>
+          <div class="upgrade-lv" id="lusuLv">未解鎖</div>
+        </div>
+        <p class="upgrade-desc" id="lusuDesc">解鎖後每 3 秒結算一次，初始每次 +150。</p>
+        <div class="action-row">
+          <button id="unlockLusuBtn" class="btn" type="button">解鎖 5000</button>
+          <button id="upgradeLusuBtn" class="btn secondary" type="button" disabled>升級魯肅</button>
+          <div class="cost" id="lusuCost"></div>
+        </div>
+      </article>
+
+      <article class="upgrade">
+        <div class="upgrade-head">
+          <div class="upgrade-name">曹老闆草船</div>
+          <div class="upgrade-lv" id="boatLv">未解鎖</div>
+        </div>
+        <p class="upgrade-desc" id="boatDesc">解鎖後每 10 秒可用一次，消耗 1000，獲得 1000-3000 隨機箭。</p>
+        <div class="action-row">
+          <button id="unlockBoatBtn" class="btn" type="button">解鎖 20000</button>
+          <button id="upgradeBoatBtn" class="btn secondary" type="button" disabled>升級草船</button>
+          <button id="useBoatBtn" class="btn secondary" type="button" disabled>使用草船</button>
+          <div class="cost" id="boatCost"></div>
+        </div>
+        <div class="cost" id="boatCooldown">冷卻：未解鎖</div>
+      </article>
+    </aside>
+  </main>
+
+  <script>
+    const state = {
+      arrows: 0,
+      clickLevel: 1,
+      zhaoUnlocked: false,
+      zhaoLevel: 1,
+      lusuUnlocked: false,
+      lusuLevel: 1,
+      boatUnlocked: false,
+      boatLevel: 1,
+      startTime: Date.now(),
+      firstMilestoneMs: null,
+      zhaoAccumulatorMs: 0,
+      lusuAccumulatorMs: 0,
+      boatCooldownMs: 0,
+      lastTickMs: Date.now()
+    };
+
+    const EL = {
+      arrows: document.getElementById("arrows"),
+      clickPower: document.getElementById("clickPower"),
+      clickPowerInline: document.getElementById("clickPowerInline"),
+      eps: document.getElementById("eps"),
+      milestone: document.getElementById("milestone"),
+      message: document.getElementById("message"),
+      makeArrowBtn: document.getElementById("makeArrowBtn"),
+      clickLv: document.getElementById("clickLv"),
+      clickCost: document.getElementById("clickCost"),
+      upgradeClickBtn: document.getElementById("upgradeClickBtn"),
+      zhaoLv: document.getElementById("zhaoLv"),
+      zhaoDesc: document.getElementById("zhaoDesc"),
+      zhaoCost: document.getElementById("zhaoCost"),
+      unlockZhaoBtn: document.getElementById("unlockZhaoBtn"),
+      upgradeZhaoBtn: document.getElementById("upgradeZhaoBtn"),
+      lusuLv: document.getElementById("lusuLv"),
+      lusuDesc: document.getElementById("lusuDesc"),
+      lusuCost: document.getElementById("lusuCost"),
+      unlockLusuBtn: document.getElementById("unlockLusuBtn"),
+      upgradeLusuBtn: document.getElementById("upgradeLusuBtn"),
+      boatLv: document.getElementById("boatLv"),
+      boatDesc: document.getElementById("boatDesc"),
+      boatCost: document.getElementById("boatCost"),
+      unlockBoatBtn: document.getElementById("unlockBoatBtn"),
+      upgradeBoatBtn: document.getElementById("upgradeBoatBtn"),
+      useBoatBtn: document.getElementById("useBoatBtn"),
+      boatCooldown: document.getElementById("boatCooldown")
+    };
+
+    const unlockCosts = {
+      zhao: 1000,
+      lusu: 5000,
+      boat: 20000
+    };
+
+    function roundCost(value) {
+      return Math.round(value);
+    }
+
+    function formulaCost(base, level) {
+      return roundCost(base * Math.pow(level, 1.4));
+    }
+
+    function formatNumber(value) {
+      return value.toLocaleString("zh-Hant-TW");
+    }
+
+    function clickPower() {
+      return state.clickLevel;
+    }
+
+    function zhaoPerSecond() {
+      if (!state.zhaoUnlocked) return 0;
+      return 10 * state.zhaoLevel;
+    }
+
+    function lusuPerCycle() {
+      if (!state.lusuUnlocked) return 0;
+      return 150 * state.lusuLevel;
+    }
+
+    function boatRange() {
+      const min = 1000 + (state.boatLevel - 1) * 500;
+      const max = 3000 + (state.boatLevel - 1) * 2000;
+      return { min, max };
+    }
+
+    function averageEPS() {
+      return zhaoPerSecond() + lusuPerCycle() / 3;
+    }
+
+    function afford(cost) {
+      return state.arrows >= cost;
+    }
+
+    function spend(cost) {
+      state.arrows -= cost;
+    }
+
+    function gain(amount) {
+      state.arrows += amount;
+      checkMilestone();
+    }
+
+    function checkMilestone() {
+      if (state.firstMilestoneMs !== null) {
+        return;
+      }
+      if (state.arrows >= 100000) {
+        state.firstMilestoneMs = Date.now() - state.startTime;
+        setMessage("已首次達成持有十萬箭。", false);
+      }
+    }
+
+    function formatElapsed(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return `${h.toString().padStart(2, "0")}:${m
+        .toString()
+        .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    }
+
+    function setMessage(text, isWarn) {
+      EL.message.textContent = text;
+      EL.message.classList.toggle("warn", !!isWarn);
+    }
+
+    function updateUI() {
+      EL.arrows.textContent = formatNumber(state.arrows);
+      EL.clickPower.textContent = formatNumber(clickPower());
+      EL.clickPowerInline.textContent = formatNumber(clickPower());
+      EL.eps.textContent = formatNumber(averageEPS());
+      EL.milestone.textContent =
+        state.firstMilestoneMs === null ? "尚未達成" : formatElapsed(state.firstMilestoneMs);
+
+      const clickUpgradeCost = roundCost(200 * state.clickLevel);
+      EL.clickLv.textContent = `等級 ${state.clickLevel}`;
+      EL.clickCost.textContent = `費用：${formatNumber(clickUpgradeCost)}`;
+      EL.upgradeClickBtn.disabled = !afford(clickUpgradeCost);
+
+      if (state.zhaoUnlocked) {
+        const cost = formulaCost(200, state.zhaoLevel);
+        EL.zhaoLv.textContent = `等級 ${state.zhaoLevel}`;
+        EL.zhaoDesc.textContent = `每秒結算一次，每次 +${formatNumber(zhaoPerSecond())}`;
+        EL.zhaoCost.textContent = `升級費用：${formatNumber(cost)}`;
+        EL.unlockZhaoBtn.disabled = true;
+        EL.unlockZhaoBtn.textContent = "已解鎖";
+        EL.upgradeZhaoBtn.disabled = !afford(cost);
+      } else {
+        EL.zhaoLv.textContent = "未解鎖";
+        EL.zhaoCost.textContent = `解鎖費用：${formatNumber(unlockCosts.zhao)}`;
+        EL.unlockZhaoBtn.disabled = !afford(unlockCosts.zhao);
+        EL.upgradeZhaoBtn.disabled = true;
+      }
+
+      if (state.lusuUnlocked) {
+        const cost = formulaCost(5000, state.lusuLevel);
+        EL.lusuLv.textContent = `等級 ${state.lusuLevel}`;
+        EL.lusuDesc.textContent = `每 3 秒結算一次，每次 +${formatNumber(lusuPerCycle())}`;
+        EL.lusuCost.textContent = `升級費用：${formatNumber(cost)}`;
+        EL.unlockLusuBtn.disabled = true;
+        EL.unlockLusuBtn.textContent = "已解鎖";
+        EL.upgradeLusuBtn.disabled = !afford(cost);
+      } else {
+        EL.lusuLv.textContent = "未解鎖";
+        EL.lusuCost.textContent = `解鎖費用：${formatNumber(unlockCosts.lusu)}`;
+        EL.unlockLusuBtn.disabled = !afford(unlockCosts.lusu);
+        EL.upgradeLusuBtn.disabled = true;
+      }
+
+      if (state.boatUnlocked) {
+        const cost = formulaCost(20000, state.boatLevel);
+        const range = boatRange();
+        EL.boatLv.textContent = `等級 ${state.boatLevel}`;
+        EL.boatDesc.textContent = `每次消耗 1000，獲得 ${formatNumber(range.min)}-${formatNumber(
+          range.max
+        )} 隨機箭。`;
+        EL.boatCost.textContent = `升級費用：${formatNumber(cost)}`;
+        EL.unlockBoatBtn.disabled = true;
+        EL.unlockBoatBtn.textContent = "已解鎖";
+        EL.upgradeBoatBtn.disabled = !afford(cost);
+        EL.useBoatBtn.disabled = !(state.boatCooldownMs <= 0 && afford(1000));
+        EL.boatCooldown.textContent =
+          state.boatCooldownMs <= 0
+            ? "冷卻：可使用"
+            : `冷卻：${(state.boatCooldownMs / 1000).toFixed(1)} 秒`;
+      } else {
+        EL.boatLv.textContent = "未解鎖";
+        EL.boatCost.textContent = `解鎖費用：${formatNumber(unlockCosts.boat)}`;
+        EL.unlockBoatBtn.disabled = !afford(unlockCosts.boat);
+        EL.upgradeBoatBtn.disabled = true;
+        EL.useBoatBtn.disabled = true;
+        EL.boatCooldown.textContent = "冷卻：未解鎖";
+      }
+    }
+
+    function getRandomIntInclusive(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    EL.makeArrowBtn.addEventListener("click", () => {
+      gain(clickPower());
+      updateUI();
+    });
+
+    EL.upgradeClickBtn.addEventListener("click", () => {
+      const cost = roundCost(200 * state.clickLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級點擊。", true);
+        return;
+      }
+      spend(cost);
+      state.clickLevel += 1;
+      setMessage("點擊鍛造升級成功。", false);
+      updateUI();
+    });
+
+    EL.unlockZhaoBtn.addEventListener("click", () => {
+      if (state.zhaoUnlocked) return;
+      if (!afford(unlockCosts.zhao)) {
+        setMessage("箭矢不足，無法解鎖趙雲。", true);
+        return;
+      }
+      spend(unlockCosts.zhao);
+      state.zhaoUnlocked = true;
+      setMessage("苦力趙雲已加入。", false);
+      updateUI();
+    });
+
+    EL.upgradeZhaoBtn.addEventListener("click", () => {
+      if (!state.zhaoUnlocked) return;
+      const cost = formulaCost(200, state.zhaoLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級趙雲。", true);
+        return;
+      }
+      spend(cost);
+      state.zhaoLevel += 1;
+      setMessage("趙雲升級成功。", false);
+      updateUI();
+    });
+
+    EL.unlockLusuBtn.addEventListener("click", () => {
+      if (state.lusuUnlocked) return;
+      if (!afford(unlockCosts.lusu)) {
+        setMessage("箭矢不足，無法解鎖魯肅。", true);
+        return;
+      }
+      spend(unlockCosts.lusu);
+      state.lusuUnlocked = true;
+      setMessage("魯肅已加入。", false);
+      updateUI();
+    });
+
+    EL.upgradeLusuBtn.addEventListener("click", () => {
+      if (!state.lusuUnlocked) return;
+      const cost = formulaCost(5000, state.lusuLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級魯肅。", true);
+        return;
+      }
+      spend(cost);
+      state.lusuLevel += 1;
+      setMessage("魯肅升級成功。", false);
+      updateUI();
+    });
+
+    EL.unlockBoatBtn.addEventListener("click", () => {
+      if (state.boatUnlocked) return;
+      if (!afford(unlockCosts.boat)) {
+        setMessage("箭矢不足，無法解鎖草船。", true);
+        return;
+      }
+      spend(unlockCosts.boat);
+      state.boatUnlocked = true;
+      setMessage("草船已備妥。", false);
+      updateUI();
+    });
+
+    EL.upgradeBoatBtn.addEventListener("click", () => {
+      if (!state.boatUnlocked) return;
+      const cost = formulaCost(20000, state.boatLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級草船。", true);
+        return;
+      }
+      spend(cost);
+      state.boatLevel += 1;
+      setMessage("草船升級成功。", false);
+      updateUI();
+    });
+
+    EL.useBoatBtn.addEventListener("click", () => {
+      if (!state.boatUnlocked) return;
+      if (state.boatCooldownMs > 0) {
+        setMessage("草船仍在冷卻中。", true);
+        return;
+      }
+      if (!afford(1000)) {
+        setMessage("箭矢不足 1000，無法使用草船。", true);
+        return;
+      }
+
+      const { min, max } = boatRange();
+      const loot = getRandomIntInclusive(min, max);
+      spend(1000);
+      gain(loot);
+      state.boatCooldownMs = 10000;
+      setMessage(`草船成功借箭，獲得 ${formatNumber(loot)}。`, false);
+      updateUI();
+    });
+
+    function tick(nowMs) {
+      const deltaMs = nowMs - state.lastTickMs;
+      state.lastTickMs = nowMs;
+
+      if (state.zhaoUnlocked) {
+        state.zhaoAccumulatorMs += deltaMs;
+        while (state.zhaoAccumulatorMs >= 1000) {
+          gain(zhaoPerSecond());
+          state.zhaoAccumulatorMs -= 1000;
+        }
+      }
+
+      if (state.lusuUnlocked) {
+        state.lusuAccumulatorMs += deltaMs;
+        while (state.lusuAccumulatorMs >= 3000) {
+          gain(lusuPerCycle());
+          state.lusuAccumulatorMs -= 3000;
+        }
+      }
+
+      if (state.boatUnlocked && state.boatCooldownMs > 0) {
+        state.boatCooldownMs = Math.max(0, state.boatCooldownMs - deltaMs);
+      }
+
+      updateUI();
+      requestAnimationFrame(tick);
+    }
+
+    setMessage("戰局開始。", false);
+    updateUI();
+    requestAnimationFrame((nowMs) => {
+      state.lastTickMs = nowMs;
+      tick(nowMs);
+    });
+  </script>
 </body>
 </html>
