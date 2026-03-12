@@ -386,7 +386,7 @@
           <div class="upgrade-name">點擊鍛造</div>
           <div class="upgrade-lv" id="clickLv">等級 1</div>
         </div>
-        <p class="upgrade-desc">每次升級，點擊額外 +1 箭。</p>
+        <p class="upgrade-desc">點擊畫面製造箭矢。每次升級消耗 200 x 等級，升級後每次點擊多製造 1 隻箭矢。</p>
         <div class="action-row">
           <button id="upgradeClickBtn" class="btn" type="button">升級點擊</button>
           <div class="cost" id="clickCost"></div>
@@ -395,12 +395,12 @@
 
       <article class="upgrade" id="zhaoPanel">
         <div class="upgrade-head">
-          <div class="upgrade-name">苦力趙雲</div>
+          <div class="upgrade-name">趙雲</div>
           <div class="upgrade-lv" id="zhaoLv">未解鎖</div>
         </div>
-        <p class="upgrade-desc" id="zhaoDesc">解鎖後每秒結算一次，初始每次 +10。</p>
+        <p class="upgrade-desc" id="zhaoDesc">子龍將軍忠義無雙，手搓箭矢的速度也是一等一的。持有 1,000 隻箭矢時解鎖，解鎖後每秒結算一次，初始每次製造 10 隻箭矢。</p>
         <div class="action-row">
-          <button id="unlockZhaoBtn" class="btn" type="button">解鎖 1000</button>
+          <button id="unlockZhaoBtn" class="btn" type="button" disabled>持有 1,000 解鎖</button>
           <button id="upgradeZhaoBtn" class="btn secondary" type="button" disabled>升級趙雲</button>
           <div class="cost" id="zhaoCost"></div>
         </div>
@@ -408,12 +408,12 @@
 
       <article class="upgrade" id="lusuPanel">
         <div class="upgrade-head">
-          <div class="upgrade-name">濫好人魯肅</div>
+          <div class="upgrade-name">魯肅</div>
           <div class="upgrade-lv" id="lusuLv">未解鎖</div>
         </div>
-        <p class="upgrade-desc" id="lusuDesc">解鎖後每 3 秒結算一次，初始每次 +150。</p>
+        <p class="upgrade-desc" id="lusuDesc">魯肅從孫吳那裡搖人來了。持有 5,000 隻箭矢時解鎖，解鎖後每 3 秒結算一次，初始每次製造 150 隻箭矢。</p>
         <div class="action-row">
-          <button id="unlockLusuBtn" class="btn" type="button">解鎖 5000</button>
+          <button id="unlockLusuBtn" class="btn" type="button" disabled>持有 5,000 解鎖</button>
           <button id="upgradeLusuBtn" class="btn secondary" type="button" disabled>升級魯肅</button>
           <div class="cost" id="lusuCost"></div>
         </div>
@@ -424,9 +424,9 @@
           <div class="upgrade-name">曹老闆草船</div>
           <div class="upgrade-lv" id="boatLv">未解鎖</div>
         </div>
-        <p class="upgrade-desc" id="boatDesc">解鎖後每 10 秒可用一次，消耗 1000，獲得 1000-3000 隨機箭。</p>
+        <p class="upgrade-desc" id="boatDesc">我只說造箭矢，沒說誰造的箭矢。持有 20,000 隻箭矢時解鎖，每 10 秒可使用一次，固定消耗 1,000 隻箭矢並獲得 1,000 到 3,000 的隨機整數箭矢。</p>
         <div class="action-row">
-          <button id="unlockBoatBtn" class="btn" type="button">解鎖 20000</button>
+          <button id="unlockBoatBtn" class="btn" type="button" disabled>持有 20,000 解鎖</button>
           <button id="upgradeBoatBtn" class="btn secondary" type="button" disabled>升級草船</button>
           <button id="useBoatBtn" class="btn secondary" type="button" disabled>使用草船</button>
           <div class="cost" id="boatCost"></div>
@@ -439,7 +439,7 @@
           <div class="upgrade-name">借東風</div>
           <div class="upgrade-lv" id="windLv">未解鎖</div>
         </div>
-        <p class="upgrade-desc" id="windDesc">指南針指向東方時最快（基礎 2000/秒），指向西方時最慢（基礎 500/秒）。</p>
+        <p class="upgrade-desc" id="windDesc">東風一吹，箭矢就來了。持有 100,000 隻箭矢時解鎖。指南針指向右邊時最快每秒 2,000，指向左邊時最慢每秒 500。</p>
         <div class="compass-wrap">
           <div class="compass locked" id="compassEl">
             <span class="compass-dir compass-n">北</span>
@@ -455,7 +455,7 @@
           <div class="compass-rate" id="compassRate">等待解鎖</div>
         </div>
         <div class="action-row">
-          <button id="unlockWindBtn" class="btn" type="button">解鎖 100000</button>
+          <button id="unlockWindBtn" class="btn" type="button" disabled>持有 100,000 解鎖</button>
           <button id="upgradeWindBtn" class="btn secondary" type="button" disabled>升級東風</button>
           <div class="cost" id="windCost"></div>
         </div>
@@ -537,8 +537,12 @@
       boat: 20000,
       wind: 100000
     };
-    // legacy alias
-    const unlockCosts = UNLOCK_COSTS;
+    const UPGRADE_BASE_COSTS = {
+      zhao: 200,
+      lusu: 1000,
+      boat: 5000,
+      wind: 20000
+    };
 
     function roundCost(value) {
       return Math.round(value);
@@ -598,6 +602,7 @@
     function gain(amount) {
       state.arrows += Math.floor(amount);
       checkMilestone();
+      checkUnlocks();
     }
 
     function checkMilestone() {
@@ -607,6 +612,32 @@
       if (state.arrows >= 100000) {
         state.firstMilestoneMs = Date.now() - state.startTime;
         setMessage("已首次達成持有十萬箭。", false);
+      }
+    }
+
+    function checkUnlocks() {
+      if (!state.zhaoUnlocked && state.arrows >= UNLOCK_COSTS.zhao) {
+        state.zhaoUnlocked = true;
+        state.zhaoAccumulatorMs = 0;
+        setMessage("趙雲已解鎖。", false);
+      }
+
+      if (state.zhaoUnlocked && !state.lusuUnlocked && state.arrows >= UNLOCK_COSTS.lusu) {
+        state.lusuUnlocked = true;
+        state.lusuAccumulatorMs = 0;
+        setMessage("魯肅已解鎖。", false);
+      }
+
+      if (state.lusuUnlocked && !state.boatUnlocked && state.arrows >= UNLOCK_COSTS.boat) {
+        state.boatUnlocked = true;
+        state.boatCooldownMs = 10000;
+        setMessage("曹老闆草船已解鎖。", false);
+      }
+
+      if (state.boatUnlocked && !state.windUnlocked && state.arrows >= UNLOCK_COSTS.wind) {
+        state.windUnlocked = true;
+        state.windAccumulator = 0;
+        setMessage("借東風已解鎖。", false);
       }
     }
 
@@ -652,42 +683,44 @@
       EL.upgradeClickBtn.disabled = !afford(clickUpgradeCost);
 
       if (state.zhaoUnlocked) {
-        const cost = formulaCost(200, state.zhaoLevel);
+        const cost = formulaCost(UPGRADE_BASE_COSTS.zhao, state.zhaoLevel);
         EL.zhaoLv.textContent = `等級 ${state.zhaoLevel}`;
-        EL.zhaoDesc.textContent = `每秒結算一次，每次 +${formatNumber(zhaoPerSecond())}`;
+        EL.zhaoDesc.textContent = `子龍將軍忠義無雙，手搓箭矢的速度也是一等一的。每秒結算一次，每次製造 ${formatNumber(zhaoPerSecond())} 隻箭矢。`;
         EL.zhaoCost.textContent = `升級費用：${formatNumber(cost)}`;
         EL.unlockZhaoBtn.disabled = true;
         EL.unlockZhaoBtn.textContent = "已解鎖";
         EL.upgradeZhaoBtn.disabled = !afford(cost);
       } else {
         EL.zhaoLv.textContent = "未解鎖";
-        EL.zhaoCost.textContent = `解鎖費用：${formatNumber(unlockCosts.zhao)}`;
-        EL.unlockZhaoBtn.disabled = !afford(unlockCosts.zhao);
+        EL.zhaoDesc.textContent = `子龍將軍忠義無雙，手搓箭矢的速度也是一等一的。持有 ${formatNumber(UNLOCK_COSTS.zhao)} 隻箭矢時解鎖，解鎖後每秒結算一次，初始每次製造 10 隻箭矢。`;
+        EL.zhaoCost.textContent = `升級條件：解鎖後每次升級消耗 200 x (等級^1.4)`;
+        EL.unlockZhaoBtn.disabled = true;
+        EL.unlockZhaoBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.zhao)} 解鎖`;
         EL.upgradeZhaoBtn.disabled = true;
       }
 
       if (state.lusuUnlocked) {
-        const cost = formulaCost(5000, state.lusuLevel);
+        const cost = formulaCost(UPGRADE_BASE_COSTS.lusu, state.lusuLevel);
         EL.lusuLv.textContent = `等級 ${state.lusuLevel}`;
-        EL.lusuDesc.textContent = `每 3 秒結算一次，每次 +${formatNumber(lusuPerCycle())}`;
+        EL.lusuDesc.textContent = `魯肅從孫吳那裡搖人來了。每 3 秒結算一次，每次製造 ${formatNumber(lusuPerCycle())} 隻箭矢。`;
         EL.lusuCost.textContent = `升級費用：${formatNumber(cost)}`;
         EL.unlockLusuBtn.disabled = true;
         EL.unlockLusuBtn.textContent = "已解鎖";
         EL.upgradeLusuBtn.disabled = !afford(cost);
       } else {
         EL.lusuLv.textContent = "未解鎖";
-        EL.lusuCost.textContent = `解鎖費用：${formatNumber(unlockCosts.lusu)}`;
-        EL.unlockLusuBtn.disabled = !afford(unlockCosts.lusu);
+        EL.lusuDesc.textContent = `魯肅從孫吳那裡搖人來了。持有 ${formatNumber(UNLOCK_COSTS.lusu)} 隻箭矢時解鎖，解鎖後每 3 秒結算一次，初始每次製造 150 隻箭矢。`;
+        EL.lusuCost.textContent = `升級條件：解鎖後每次升級消耗 1,000 x (等級^1.4)`;
+        EL.unlockLusuBtn.disabled = true;
+        EL.unlockLusuBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.lusu)} 解鎖`;
         EL.upgradeLusuBtn.disabled = true;
       }
 
       if (state.boatUnlocked) {
-        const cost = formulaCost(20000, state.boatLevel);
+        const cost = formulaCost(UPGRADE_BASE_COSTS.boat, state.boatLevel);
         const range = boatRange();
         EL.boatLv.textContent = `等級 ${state.boatLevel}`;
-        EL.boatDesc.textContent = `每次消耗 1000，獲得 ${formatNumber(range.min)}-${formatNumber(
-          range.max
-        )} 隨機箭。`;
+        EL.boatDesc.textContent = `我只說造箭矢，沒說誰造的箭矢。每次使用固定消耗 1,000 隻箭矢，獲得 ${formatNumber(range.min)} 到 ${formatNumber(range.max)} 的隨機整數箭矢。`;
         EL.boatCost.textContent = `升級費用：${formatNumber(cost)}`;
         EL.unlockBoatBtn.disabled = true;
         EL.unlockBoatBtn.textContent = "已解鎖";
@@ -699,8 +732,10 @@
             : `冷卻：${(state.boatCooldownMs / 1000).toFixed(1)} 秒`;
       } else {
         EL.boatLv.textContent = "未解鎖";
-        EL.boatCost.textContent = `解鎖費用：${formatNumber(unlockCosts.boat)}`;
-        EL.unlockBoatBtn.disabled = !afford(unlockCosts.boat);
+        EL.boatDesc.textContent = `我只說造箭矢，沒說誰造的箭矢。持有 ${formatNumber(UNLOCK_COSTS.boat)} 隻箭矢時解鎖，每 10 秒可使用一次，固定消耗 1,000 隻箭矢並獲得 1,000 到 3,000 的隨機整數箭矢。`;
+        EL.boatCost.textContent = `升級條件：解鎖後每次升級消耗 5,000 x (等級^1.4)`;
+        EL.unlockBoatBtn.disabled = true;
+        EL.unlockBoatBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.boat)} 解鎖`;
         EL.upgradeBoatBtn.disabled = true;
         EL.useBoatBtn.disabled = true;
         EL.boatCooldown.textContent = "冷卻：未解鎖";
@@ -708,12 +743,12 @@
 
       // Wind / compass
       if (state.windUnlocked) {
-        const cost = formulaCost(100000, state.windLevel);
+        const cost = formulaCost(UPGRADE_BASE_COSTS.wind, state.windLevel);
         const L = state.windLevel;
         const maxRate = 2000 + (L - 1) * 2000;
         const minRate = 500 + (L - 1) * 500;
         EL.windLv.textContent = `等級 ${state.windLevel}`;
-        EL.windDesc.textContent = `東風最快 ${formatNumber(maxRate)}/秒，西風最慢 ${formatNumber(minRate)}/秒。`;
+        EL.windDesc.textContent = `東風一吹，箭矢就來了。指南針向右時最快每秒 ${formatNumber(maxRate)}，向左時最慢每秒 ${formatNumber(minRate)}。`;
         EL.windCost.textContent = `升級費用：${formatNumber(cost)}`;
         EL.unlockWindBtn.disabled = true;
         EL.unlockWindBtn.textContent = "已解鎖";
@@ -722,8 +757,10 @@
         EL.compassRate.textContent = `${getWindRate().toLocaleString("zh-Hant-TW", { maximumFractionDigits: 1 })} 箭/秒`;
       } else {
         EL.windLv.textContent = "未解鎖";
-        EL.windCost.textContent = `解鎖費用：${formatNumber(UNLOCK_COSTS.wind)}`;
-        EL.unlockWindBtn.disabled = !afford(UNLOCK_COSTS.wind);
+        EL.windDesc.textContent = `東風一吹，箭矢就來了。持有 ${formatNumber(UNLOCK_COSTS.wind)} 隻箭矢時解鎖。指南針向右時最快每秒 2,000，向左時最慢每秒 500。`;
+        EL.windCost.textContent = `升級條件：解鎖後每次升級消耗 20,000 x (等級^1.4)`;
+        EL.unlockWindBtn.disabled = true;
+        EL.unlockWindBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.wind)} 解鎖`;
         EL.upgradeWindBtn.disabled = true;
         EL.compassEl.classList.add("locked");
         EL.compassRate.textContent = "等待解鎖";
@@ -755,20 +792,12 @@
     });
 
     EL.unlockZhaoBtn.addEventListener("click", () => {
-      if (state.zhaoUnlocked) return;
-      if (!afford(unlockCosts.zhao)) {
-        setMessage("箭矢不足，無法解鎖趙雲。", true);
-        return;
-      }
-      spend(unlockCosts.zhao);
-      state.zhaoUnlocked = true;
-      setMessage("苦力趙雲已加入。", false);
-      updateUI();
+      setMessage("趙雲會在持有達到 1,000 隻箭矢時自動解鎖。", true);
     });
 
     EL.upgradeZhaoBtn.addEventListener("click", () => {
       if (!state.zhaoUnlocked) return;
-      const cost = formulaCost(200, state.zhaoLevel);
+      const cost = formulaCost(UPGRADE_BASE_COSTS.zhao, state.zhaoLevel);
       if (!afford(cost)) {
         setMessage("箭矢不足，無法升級趙雲。", true);
         return;
@@ -780,20 +809,12 @@
     });
 
     EL.unlockLusuBtn.addEventListener("click", () => {
-      if (state.lusuUnlocked) return;
-      if (!afford(unlockCosts.lusu)) {
-        setMessage("箭矢不足，無法解鎖魯肅。", true);
-        return;
-      }
-      spend(unlockCosts.lusu);
-      state.lusuUnlocked = true;
-      setMessage("魯肅已加入。", false);
-      updateUI();
+      setMessage("魯肅會在持有達到 5,000 隻箭矢時自動解鎖。", true);
     });
 
     EL.upgradeLusuBtn.addEventListener("click", () => {
       if (!state.lusuUnlocked) return;
-      const cost = formulaCost(5000, state.lusuLevel);
+      const cost = formulaCost(UPGRADE_BASE_COSTS.lusu, state.lusuLevel);
       if (!afford(cost)) {
         setMessage("箭矢不足，無法升級魯肅。", true);
         return;
@@ -805,20 +826,12 @@
     });
 
     EL.unlockBoatBtn.addEventListener("click", () => {
-      if (state.boatUnlocked) return;
-      if (!afford(unlockCosts.boat)) {
-        setMessage("箭矢不足，無法解鎖草船。", true);
-        return;
-      }
-      spend(unlockCosts.boat);
-      state.boatUnlocked = true;
-      setMessage("草船已備妥。", false);
-      updateUI();
+      setMessage("曹老闆草船會在持有達到 20,000 隻箭矢時自動解鎖。", true);
     });
 
     EL.upgradeBoatBtn.addEventListener("click", () => {
       if (!state.boatUnlocked) return;
-      const cost = formulaCost(20000, state.boatLevel);
+      const cost = formulaCost(UPGRADE_BASE_COSTS.boat, state.boatLevel);
       if (!afford(cost)) {
         setMessage("箭矢不足，無法升級草船。", true);
         return;
@@ -851,21 +864,12 @@
     });
 
     EL.unlockWindBtn.addEventListener("click", () => {
-      if (state.windUnlocked) return;
-      if (!afford(UNLOCK_COSTS.wind)) {
-        setMessage("箭矢不足，無法解鎖借東風。", true);
-        return;
-      }
-      spend(UNLOCK_COSTS.wind);
-      state.windUnlocked = true;
-      setMessage("借東風已啟動！", false);
-      saveGame();
-      updateUI();
+      setMessage("借東風會在持有達到 100,000 隻箭矢時自動解鎖。", true);
     });
 
     EL.upgradeWindBtn.addEventListener("click", () => {
       if (!state.windUnlocked) return;
-      const cost = formulaCost(100000, state.windLevel);
+      const cost = formulaCost(UPGRADE_BASE_COSTS.wind, state.windLevel);
       if (!afford(cost)) {
         setMessage("箭矢不足，無法升級借東風。", true);
         return;
@@ -1015,6 +1019,8 @@
     }
 
     loadGame();
+    checkMilestone();
+    checkUnlocks();
     setMessage("戰局開始。", false);
     updateUI();
     state.lastTickMs = performance.now();
