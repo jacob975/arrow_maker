@@ -151,6 +151,13 @@
       font-size: 0.95rem;
     }
 
+    .header-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .stats {
       display: grid;
       gap: 10px;
@@ -215,6 +222,8 @@
       padding: 16px;
       display: grid;
       gap: 12px;
+      align-content: start;
+      grid-auto-rows: max-content;
       max-height: 100%;
       overflow-y: auto;
     }
@@ -233,6 +242,10 @@
       background: rgba(255, 255, 255, 0.62);
       display: grid;
       gap: 8px;
+    }
+
+    .upgrade[hidden] {
+      display: none !important;
     }
 
     .upgrade-head {
@@ -278,6 +291,10 @@
 
     .btn.secondary {
       background: #8a6f4e;
+    }
+
+    .btn.danger {
+      background: var(--bad);
     }
 
     .btn:disabled {
@@ -331,6 +348,9 @@
       <header>
         <h1 class="title">赤壁造箭</h1>
         <p class="subtitle">點擊造箭，升級軍備，看看多久能首次持有十萬隻箭。</p>
+        <div class="header-actions">
+          <button id="resetGameBtn" class="btn danger" type="button">重開遊戲</button>
+        </div>
       </header>
 
       <section class="stats">
@@ -361,7 +381,7 @@
     <aside class="card side">
       <h2 class="upgrades-title">升級與技能</h2>
 
-      <article class="upgrade">
+      <article class="upgrade" id="clickPanel">
         <div class="upgrade-head">
           <div class="upgrade-name">點擊鍛造</div>
           <div class="upgrade-lv" id="clickLv">等級 1</div>
@@ -373,7 +393,7 @@
         </div>
       </article>
 
-      <article class="upgrade">
+      <article class="upgrade" id="zhaoPanel">
         <div class="upgrade-head">
           <div class="upgrade-name">苦力趙雲</div>
           <div class="upgrade-lv" id="zhaoLv">未解鎖</div>
@@ -386,7 +406,7 @@
         </div>
       </article>
 
-      <article class="upgrade">
+      <article class="upgrade" id="lusuPanel">
         <div class="upgrade-head">
           <div class="upgrade-name">濫好人魯肅</div>
           <div class="upgrade-lv" id="lusuLv">未解鎖</div>
@@ -399,7 +419,7 @@
         </div>
       </article>
 
-      <article class="upgrade">
+      <article class="upgrade" id="boatPanel">
         <div class="upgrade-head">
           <div class="upgrade-name">曹老闆草船</div>
           <div class="upgrade-lv" id="boatLv">未解鎖</div>
@@ -414,7 +434,7 @@
         <div class="cost" id="boatCooldown">冷卻：未解鎖</div>
       </article>
 
-      <article class="upgrade">
+      <article class="upgrade" id="windPanel">
         <div class="upgrade-head">
           <div class="upgrade-name">借東風</div>
           <div class="upgrade-lv" id="windLv">未解鎖</div>
@@ -464,7 +484,8 @@
       zhaoAccumulatorMs: 0,
       lusuAccumulatorMs: 0,
       boatCooldownMs: 0,
-      lastTickMs: performance.now()
+      lastTickMs: performance.now(),
+      isResetting: false
     };
 
     const EL = {
@@ -474,20 +495,24 @@
       eps: document.getElementById("eps"),
       milestone: document.getElementById("milestone"),
       message: document.getElementById("message"),
+      resetGameBtn: document.getElementById("resetGameBtn"),
       makeArrowBtn: document.getElementById("makeArrowBtn"),
       clickLv: document.getElementById("clickLv"),
       clickCost: document.getElementById("clickCost"),
       upgradeClickBtn: document.getElementById("upgradeClickBtn"),
+      zhaoPanel: document.getElementById("zhaoPanel"),
       zhaoLv: document.getElementById("zhaoLv"),
       zhaoDesc: document.getElementById("zhaoDesc"),
       zhaoCost: document.getElementById("zhaoCost"),
       unlockZhaoBtn: document.getElementById("unlockZhaoBtn"),
       upgradeZhaoBtn: document.getElementById("upgradeZhaoBtn"),
+      lusuPanel: document.getElementById("lusuPanel"),
       lusuLv: document.getElementById("lusuLv"),
       lusuDesc: document.getElementById("lusuDesc"),
       lusuCost: document.getElementById("lusuCost"),
       unlockLusuBtn: document.getElementById("unlockLusuBtn"),
       upgradeLusuBtn: document.getElementById("upgradeLusuBtn"),
+      boatPanel: document.getElementById("boatPanel"),
       boatLv: document.getElementById("boatLv"),
       boatDesc: document.getElementById("boatDesc"),
       boatCost: document.getElementById("boatCost"),
@@ -495,6 +520,7 @@
       upgradeBoatBtn: document.getElementById("upgradeBoatBtn"),
       useBoatBtn: document.getElementById("useBoatBtn"),
       boatCooldown: document.getElementById("boatCooldown"),
+      windPanel: document.getElementById("windPanel"),
       windLv: document.getElementById("windLv"),
       windDesc: document.getElementById("windDesc"),
       windCost: document.getElementById("windCost"),
@@ -599,7 +625,20 @@
       EL.message.classList.toggle("warn", !!isWarn);
     }
 
+    function updateMethodVisibility() {
+      // 初始顯示點擊與趙雲；前一個方法解鎖後才顯示下一個方法。
+      const showLusu = state.zhaoUnlocked || state.lusuUnlocked || state.boatUnlocked || state.windUnlocked;
+      const showBoat = state.lusuUnlocked || state.boatUnlocked || state.windUnlocked;
+      const showWind = state.boatUnlocked || state.windUnlocked;
+
+      EL.lusuPanel.hidden = !showLusu;
+      EL.boatPanel.hidden = !showBoat;
+      EL.windPanel.hidden = !showWind;
+    }
+
     function updateUI() {
+      updateMethodVisibility();
+
       EL.arrows.textContent = formatNumber(state.arrows);
       EL.clickPower.textContent = formatNumber(clickPower());
       EL.clickPowerInline.textContent = formatNumber(clickPower());
@@ -841,6 +880,27 @@
     // ── localStorage save / load ──────────────────
     const SAVE_KEY = "arrowMakerSave";
 
+    function resetGame() {
+      const confirmed = window.confirm("確定要清除目前進度並重開嗎？");
+      if (!confirmed) {
+        return;
+      }
+
+      state.isResetting = true;
+      clearInterval(autoSaveTimer);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+
+      try {
+        localStorage.removeItem(SAVE_KEY);
+        localStorage.removeItem("arrows");
+      } catch (e) {}
+
+      setMessage("已清除存檔，正在重開...", false);
+      setTimeout(() => {
+        location.reload();
+      }, 50);
+    }
+
     function saveGame() {
       try {
         const save = {
@@ -884,8 +944,22 @@
       } catch (e) {}
     }
 
-    setInterval(saveGame, 5000);
-    window.addEventListener("beforeunload", saveGame);
+    function handleBeforeUnload() {
+      if (state.isResetting) {
+        return;
+      }
+      saveGame();
+    }
+
+    const autoSaveTimer = setInterval(() => {
+      if (state.isResetting) {
+        return;
+      }
+      saveGame();
+    }, 5000);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    EL.resetGameBtn.addEventListener("click", resetGame);
 
     function tick(nowMs) {
       const deltaMs = nowMs - state.lastTickMs;
