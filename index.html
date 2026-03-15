@@ -88,9 +88,97 @@
     }
 
     .compass-rate {
+      display: block;
+      min-height: 1.2em;
       font-size: 0.88rem;
       font-weight: 700;
       color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .qimen-grid {
+      display: grid;
+      gap: 6px;
+      grid-template-columns: repeat(3, minmax(42px, 1fr));
+      max-width: 320px;
+    }
+
+    .qimen-cell {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--ink);
+      font-weight: 700;
+      min-height: 42px;
+      cursor: pointer;
+    }
+
+    .qimen-cell:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .qimen-cell.center {
+      background: rgba(138, 111, 78, 0.22);
+      cursor: default;
+    }
+
+    .qimen-target {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+
+    .altar-wrap {
+      display: grid;
+      gap: 8px;
+      max-width: 340px;
+    }
+
+    .altar-field {
+      position: relative;
+      width: min(320px, 100%);
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(242, 232, 207, 0.75));
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    .altar-ring {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px dashed rgba(155, 34, 38, 0.8);
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: grab;
+      background: rgba(155, 34, 38, 0.06);
+    }
+
+    .altar-ring.dragging {
+      cursor: grabbing;
+    }
+
+    .altar-star {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: #b7791f;
+      font-size: 1.05rem;
+      line-height: 1;
+      text-shadow: 0 0 6px rgba(183, 121, 31, 0.4);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .altar-hint {
+      font-size: 0.86rem;
+      color: var(--ink-soft);
     }
 
     * {
@@ -115,6 +203,7 @@
     .shell {
       width: min(1100px, 100%);
       height: calc(100vh - 64px);
+      min-height: 0;
       display: grid;
       gap: 16px;
       grid-template-columns: 1.15fr 0.85fr;
@@ -135,6 +224,7 @@
       gap: 16px;
       position: sticky;
       top: 0;
+      min-height: 0;
       max-height: 100%;
       overflow-y: auto;
     }
@@ -224,8 +314,12 @@
       gap: 12px;
       align-content: start;
       grid-auto-rows: max-content;
+      min-height: 0;
+      height: 100%;
       max-height: 100%;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      overflow-anchor: none;
     }
 
     .upgrades-title {
@@ -304,8 +398,10 @@
     }
 
     .cost {
+      min-height: 1.2em;
       font-size: 0.86rem;
       color: var(--ink-soft);
+      white-space: nowrap;
     }
 
     .message {
@@ -460,6 +556,51 @@
           <div class="cost" id="windCost"></div>
         </div>
       </article>
+
+      <article class="upgrade" id="qimenPanel" hidden>
+        <div class="upgrade-head">
+          <div class="upgrade-name">奇門遁甲</div>
+          <div class="upgrade-lv" id="qimenLv">未解鎖</div>
+        </div>
+        <p class="upgrade-desc" id="qimenDesc">子不語怪力亂神，除非。持有 500,000 隻箭矢時解鎖。依序點擊九宮格口令可借得大量箭矢。</p>
+        <div class="qimen-grid" id="qimenGrid">
+          <button class="qimen-cell" type="button" data-qimen="生" disabled>生</button>
+          <button class="qimen-cell" type="button" data-qimen="休" disabled>休</button>
+          <button class="qimen-cell" type="button" data-qimen="開" disabled>開</button>
+          <button class="qimen-cell" type="button" data-qimen="傷" disabled>傷</button>
+          <button class="qimen-cell center" type="button" disabled>中軍</button>
+          <button class="qimen-cell" type="button" data-qimen="驚" disabled>驚</button>
+          <button class="qimen-cell" type="button" data-qimen="杜" disabled>杜</button>
+          <button class="qimen-cell" type="button" data-qimen="景" disabled>景</button>
+          <button class="qimen-cell" type="button" data-qimen="死" disabled>死</button>
+        </div>
+        <div class="qimen-target" id="qimenTarget">口令：等待解鎖</div>
+        <div class="action-row">
+          <button id="unlockQimenBtn" class="btn" type="button" disabled>持有 500,000 解鎖</button>
+          <button id="upgradeQimenBtn" class="btn secondary" type="button" disabled>升級奇門遁甲</button>
+          <div class="cost" id="qimenCost"></div>
+        </div>
+      </article>
+
+      <article class="upgrade" id="altarPanel" hidden>
+        <div class="upgrade-head">
+          <div class="upgrade-name">天壇</div>
+          <div class="upgrade-lv" id="altarLv">未解鎖</div>
+        </div>
+        <p class="upgrade-desc" id="altarDesc">科學的盡頭。持有 2,000,000 隻箭矢時解鎖，移動虛線圓圈包住星星即可持續借箭。</p>
+        <div class="altar-wrap">
+          <div class="altar-field" id="altarField">
+            <div class="altar-star" id="altarStar">★</div>
+            <div class="altar-ring" id="altarRing"></div>
+          </div>
+          <div class="altar-hint" id="altarHint">等待解鎖</div>
+        </div>
+        <div class="action-row">
+          <button id="unlockAltarBtn" class="btn" type="button" disabled>持有 2,000,000 解鎖</button>
+          <button id="upgradeAltarBtn" class="btn secondary" type="button" disabled>升級天壇</button>
+          <div class="cost" id="altarCost"></div>
+        </div>
+      </article>
     </aside>
   </main>
 
@@ -475,6 +616,26 @@
       boatLevel: 1,
       windUnlocked: false,
       windLevel: 1,
+      qimenUnlocked: false,
+      qimenLevel: 1,
+      qimenTarget: "",
+      qimenProgress: 0,
+      altarUnlocked: false,
+      altarLevel: 1,
+      altarStarX: 80,
+      altarStarY: 80,
+      altarDirX: Math.cos(Math.random() * Math.PI * 2),
+      altarDirY: Math.sin(Math.random() * Math.PI * 2),
+      altarCursorX: 80,
+      altarCursorY: 80,
+      altarFieldW: 0,
+      altarFieldH: 0,
+      altarAccumulator: 0,
+      altarCurrentRate: 0,
+      altarDragging: false,
+      altarDragPointerId: null,
+      altarDragOffsetX: 0,
+      altarDragOffsetY: 0,
       compassAngle: 0,
       compassTargetAngle: Math.random() * 360,
       compassChangeTimer: 2000 + Math.random() * 4000,
@@ -528,21 +689,47 @@
       upgradeWindBtn: document.getElementById("upgradeWindBtn"),
       compassNeedle: document.getElementById("compassNeedle"),
       compassEl: document.getElementById("compassEl"),
-      compassRate: document.getElementById("compassRate")
+      compassRate: document.getElementById("compassRate"),
+      qimenPanel: document.getElementById("qimenPanel"),
+      qimenLv: document.getElementById("qimenLv"),
+      qimenDesc: document.getElementById("qimenDesc"),
+      qimenTarget: document.getElementById("qimenTarget"),
+      qimenCost: document.getElementById("qimenCost"),
+      unlockQimenBtn: document.getElementById("unlockQimenBtn"),
+      upgradeQimenBtn: document.getElementById("upgradeQimenBtn"),
+      qimenGrid: document.getElementById("qimenGrid"),
+      altarPanel: document.getElementById("altarPanel"),
+      altarLv: document.getElementById("altarLv"),
+      altarDesc: document.getElementById("altarDesc"),
+      altarHint: document.getElementById("altarHint"),
+      altarCost: document.getElementById("altarCost"),
+      altarField: document.getElementById("altarField"),
+      altarRing: document.getElementById("altarRing"),
+      unlockAltarBtn: document.getElementById("unlockAltarBtn"),
+      upgradeAltarBtn: document.getElementById("upgradeAltarBtn"),
+      altarStar: document.getElementById("altarStar")
     };
 
     const UNLOCK_COSTS = {
       zhao: 1000,
       lusu: 5000,
       boat: 20000,
-      wind: 100000
+      wind: 100000,
+      qimen: 500000,
+      altar: 2000000
     };
     const UPGRADE_BASE_COSTS = {
       zhao: 200,
       lusu: 1000,
       boat: 5000,
-      wind: 20000
+      wind: 20000,
+      qimen: 100000,
+      altar: 500000
     };
+
+    const QIMEN_WORDS = ["生", "休", "開", "傷", "驚", "杜", "景", "死"];
+    const ALTAR_STAR_SPEED_PER_SEC = 1;
+    const ALTAR_RING_RADIUS = 36;
 
     function roundCost(value) {
       return Math.round(value);
@@ -576,6 +763,14 @@
       return { min, max };
     }
 
+    function qimenReward() {
+      return 20000 * state.qimenLevel;
+    }
+
+    function altarReward() {
+      return 20000 * state.altarLevel;
+    }
+
     function getWindRate() {
       if (!state.windUnlocked) return 0;
       const L = state.windLevel;
@@ -588,7 +783,7 @@
     }
 
     function averageEPS() {
-      return zhaoPerSecond() + lusuPerCycle() / 3 + getWindRate();
+      return zhaoPerSecond() + lusuPerCycle() / 3 + getWindRate() + state.altarCurrentRate;
     }
 
     function afford(cost) {
@@ -639,6 +834,28 @@
         state.windAccumulator = 0;
         setMessage("借東風已解鎖。", false);
       }
+
+      if (state.windUnlocked && !state.qimenUnlocked && state.arrows >= UNLOCK_COSTS.qimen) {
+        state.qimenUnlocked = true;
+        if (!state.qimenTarget || state.qimenTarget.length !== 4) {
+          state.qimenTarget = makeQimenTarget();
+        }
+        state.qimenProgress = 0;
+        setMessage("奇門遁甲已解鎖。", false);
+      }
+
+      if (state.qimenUnlocked && !state.altarUnlocked && state.arrows >= UNLOCK_COSTS.altar) {
+        state.altarUnlocked = true;
+        setMessage("天壇已解鎖。", false);
+      }
+    }
+
+    function makeQimenTarget() {
+      let target = "";
+      for (let i = 0; i < 4; i += 1) {
+        target += QIMEN_WORDS[getRandomIntInclusive(0, QIMEN_WORDS.length - 1)];
+      }
+      return target;
     }
 
     function formatElapsed(ms) {
@@ -656,15 +873,59 @@
       EL.message.classList.toggle("warn", !!isWarn);
     }
 
+    function syncAltarSize() {
+      const w = EL.altarField.clientWidth;
+      const h = EL.altarField.clientHeight;
+      if (w <= 0 || h <= 0) return;
+
+      if (state.altarFieldW <= 0 || state.altarFieldH <= 0) {
+        state.altarFieldW = w;
+        state.altarFieldH = h;
+        state.altarStarX = w * 0.5;
+        state.altarStarY = h * 0.5;
+        state.altarCursorX = w * 0.5;
+        state.altarCursorY = h * 0.5;
+        return;
+      }
+
+      if (state.altarFieldW !== w || state.altarFieldH !== h) {
+        const sx = w / state.altarFieldW;
+        const sy = h / state.altarFieldH;
+        state.altarStarX *= sx;
+        state.altarStarY *= sy;
+        state.altarCursorX *= sx;
+        state.altarCursorY *= sy;
+        state.altarFieldW = w;
+        state.altarFieldH = h;
+      }
+
+      state.altarStarX = Math.max(0, Math.min(state.altarStarX, w));
+      state.altarStarY = Math.max(0, Math.min(state.altarStarY, h));
+      state.altarCursorX = Math.max(ALTAR_RING_RADIUS, Math.min(state.altarCursorX, w - ALTAR_RING_RADIUS));
+      state.altarCursorY = Math.max(ALTAR_RING_RADIUS, Math.min(state.altarCursorY, h - ALTAR_RING_RADIUS));
+    }
+
+    function setAltarCursorFromClient(clientX, clientY) {
+      const rect = EL.altarField.getBoundingClientRect();
+      const x = clientX - rect.left + state.altarDragOffsetX;
+      const y = clientY - rect.top + state.altarDragOffsetY;
+      state.altarCursorX = Math.max(ALTAR_RING_RADIUS, Math.min(x, rect.width - ALTAR_RING_RADIUS));
+      state.altarCursorY = Math.max(ALTAR_RING_RADIUS, Math.min(y, rect.height - ALTAR_RING_RADIUS));
+    }
+
     function updateMethodVisibility() {
       // 初始顯示點擊與趙雲；前一個方法解鎖後才顯示下一個方法。
-      const showLusu = state.zhaoUnlocked || state.lusuUnlocked || state.boatUnlocked || state.windUnlocked;
-      const showBoat = state.lusuUnlocked || state.boatUnlocked || state.windUnlocked;
-      const showWind = state.boatUnlocked || state.windUnlocked;
+      const showLusu = state.zhaoUnlocked || state.lusuUnlocked || state.boatUnlocked || state.windUnlocked || state.qimenUnlocked || state.altarUnlocked;
+      const showBoat = state.lusuUnlocked || state.boatUnlocked || state.windUnlocked || state.qimenUnlocked || state.altarUnlocked;
+      const showWind = state.boatUnlocked || state.windUnlocked || state.qimenUnlocked || state.altarUnlocked;
+      const showQimen = state.windUnlocked || state.qimenUnlocked || state.altarUnlocked;
+      const showAltar = state.qimenUnlocked || state.altarUnlocked;
 
       EL.lusuPanel.hidden = !showLusu;
       EL.boatPanel.hidden = !showBoat;
       EL.windPanel.hidden = !showWind;
+      EL.qimenPanel.hidden = !showQimen;
+      EL.altarPanel.hidden = !showAltar;
     }
 
     function updateUI() {
@@ -720,19 +981,19 @@
         const cost = formulaCost(UPGRADE_BASE_COSTS.boat, state.boatLevel);
         const range = boatRange();
         EL.boatLv.textContent = `等級 ${state.boatLevel}`;
-        EL.boatDesc.textContent = `我只說造箭矢，沒說誰造的箭矢。每次使用固定消耗 1,000 隻箭矢，獲得 ${formatNumber(range.min)} 到 ${formatNumber(range.max)} 的隨機整數箭矢。`;
+        EL.boatDesc.textContent = `我只說造箭矢，沒說誰造的箭矢。每 10 秒可使用一次，獲得 ${formatNumber(range.min)} 到 ${formatNumber(range.max)} 的隨機整數箭矢。`;
         EL.boatCost.textContent = `升級費用：${formatNumber(cost)}`;
         EL.unlockBoatBtn.disabled = true;
         EL.unlockBoatBtn.textContent = "已解鎖";
         EL.upgradeBoatBtn.disabled = !afford(cost);
-        EL.useBoatBtn.disabled = !(state.boatCooldownMs <= 0 && afford(1000));
+        EL.useBoatBtn.disabled = state.boatCooldownMs > 0;
         EL.boatCooldown.textContent =
           state.boatCooldownMs <= 0
             ? "冷卻：可使用"
             : `冷卻：${(state.boatCooldownMs / 1000).toFixed(1)} 秒`;
       } else {
         EL.boatLv.textContent = "未解鎖";
-        EL.boatDesc.textContent = `我只說造箭矢，沒說誰造的箭矢。持有 ${formatNumber(UNLOCK_COSTS.boat)} 隻箭矢時解鎖，每 10 秒可使用一次，固定消耗 1,000 隻箭矢並獲得 1,000 到 3,000 的隨機整數箭矢。`;
+        EL.boatDesc.textContent = `我只說造箭矢，沒說誰造的箭矢。持有 ${formatNumber(UNLOCK_COSTS.boat)} 隻箭矢時解鎖，每 10 秒可使用一次並獲得 1,000 到 3,000 的隨機整數箭矢。`;
         EL.boatCost.textContent = `升級條件：解鎖後每次升級消耗 5,000 x (等級^1.4)`;
         EL.unlockBoatBtn.disabled = true;
         EL.unlockBoatBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.boat)} 解鎖`;
@@ -765,6 +1026,55 @@
         EL.compassEl.classList.add("locked");
         EL.compassRate.textContent = "等待解鎖";
       }
+
+      if (state.qimenUnlocked) {
+        const cost = formulaCost(UPGRADE_BASE_COSTS.qimen, state.qimenLevel);
+        EL.qimenLv.textContent = `等級 ${state.qimenLevel}`;
+        EL.qimenDesc.textContent = `子不語怪力亂神，除非。依序連續點擊九宮格口令即可獲得 ${formatNumber(qimenReward())} 隻箭矢。`;
+        EL.qimenCost.textContent = `升級費用：${formatNumber(cost)}`;
+        EL.unlockQimenBtn.disabled = true;
+        EL.unlockQimenBtn.textContent = "已解鎖";
+        EL.upgradeQimenBtn.disabled = !afford(cost);
+        EL.qimenTarget.textContent = `口令：${state.qimenTarget}（進度 ${state.qimenProgress}/4）`;
+      } else {
+        EL.qimenLv.textContent = "未解鎖";
+        EL.qimenDesc.textContent = `子不語怪力亂神，除非。持有 ${formatNumber(UNLOCK_COSTS.qimen)} 隻箭矢時解鎖。依序連續點擊九宮格口令可借得箭矢。`;
+        EL.qimenCost.textContent = `升級條件：解鎖後每次升級消耗 100,000 x (等級^1.4)`;
+        EL.unlockQimenBtn.disabled = true;
+        EL.unlockQimenBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.qimen)} 解鎖`;
+        EL.upgradeQimenBtn.disabled = true;
+        EL.qimenTarget.textContent = "口令：等待解鎖";
+      }
+
+      const qimenCells = EL.qimenGrid.querySelectorAll(".qimen-cell[data-qimen]");
+      qimenCells.forEach((cell) => {
+        cell.disabled = !state.qimenUnlocked;
+      });
+
+      if (state.altarUnlocked) {
+        const cost = formulaCost(UPGRADE_BASE_COSTS.altar, state.altarLevel);
+        EL.altarLv.textContent = `等級 ${state.altarLevel}`;
+        EL.altarDesc.textContent = `科學的盡頭。移動滑鼠控制虛線圓圈，星星位於圓內時每秒獲得 ${formatNumber(altarReward())} 隻箭矢。`;
+        EL.altarCost.textContent = `升級費用：${formatNumber(cost)}`;
+        EL.unlockAltarBtn.disabled = true;
+        EL.unlockAltarBtn.textContent = "已解鎖";
+        EL.upgradeAltarBtn.disabled = !afford(cost);
+        EL.altarHint.textContent = state.altarCurrentRate > 0 ? "命中天象，正在持續借箭。" : "將虛線圓移到星星上可持續產箭。";
+      } else {
+        EL.altarLv.textContent = "未解鎖";
+        EL.altarDesc.textContent = `科學的盡頭。持有 ${formatNumber(UNLOCK_COSTS.altar)} 隻箭矢時解鎖，正方形內的星星每秒移動 1 像素。`;
+        EL.altarCost.textContent = `升級條件：解鎖後每次升級消耗 500,000 x (等級^1.4)`;
+        EL.unlockAltarBtn.disabled = true;
+        EL.unlockAltarBtn.textContent = `持有 ${formatNumber(UNLOCK_COSTS.altar)} 解鎖`;
+        EL.upgradeAltarBtn.disabled = true;
+        EL.altarHint.textContent = "等待解鎖";
+      }
+
+      EL.altarStar.style.left = `${state.altarStarX.toFixed(2)}px`;
+      EL.altarStar.style.top = `${state.altarStarY.toFixed(2)}px`;
+      EL.altarRing.style.left = `${state.altarCursorX.toFixed(2)}px`;
+      EL.altarRing.style.top = `${state.altarCursorY.toFixed(2)}px`;
+      EL.altarRing.classList.toggle("dragging", state.altarDragging);
 
       // Compass needle: game angle 0=East → CSS rotate(90deg) for north-up needle
       EL.compassNeedle.style.transform = `rotate(${(state.compassAngle + 90) % 360}deg)`;
@@ -848,14 +1158,9 @@
         setMessage("草船仍在冷卻中。", true);
         return;
       }
-      if (!afford(1000)) {
-        setMessage("箭矢不足 1000，無法使用草船。", true);
-        return;
-      }
 
       const { min, max } = boatRange();
       const loot = getRandomIntInclusive(min, max);
-      spend(1000);
       gain(loot);
       state.boatCooldownMs = 10000;
       setMessage(`草船成功借箭，獲得 ${formatNumber(loot)}。`, false);
@@ -878,6 +1183,112 @@
       state.windLevel += 1;
       setMessage("借東風升級成功。", false);
       saveGame();
+      updateUI();
+    });
+
+    EL.unlockQimenBtn.addEventListener("click", () => {
+      setMessage("奇門遁甲會在持有達到 500,000 隻箭矢時自動解鎖。", true);
+    });
+
+    EL.upgradeQimenBtn.addEventListener("click", () => {
+      if (!state.qimenUnlocked) return;
+      const cost = formulaCost(UPGRADE_BASE_COSTS.qimen, state.qimenLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級奇門遁甲。", true);
+        return;
+      }
+      spend(cost);
+      state.qimenLevel += 1;
+      setMessage("奇門遁甲升級成功。", false);
+      saveGame();
+      updateUI();
+    });
+
+    EL.qimenGrid.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const word = target.dataset.qimen;
+      if (!word || !state.qimenUnlocked) return;
+
+      const expected = state.qimenTarget[state.qimenProgress];
+      if (word === expected) {
+        state.qimenProgress += 1;
+        if (state.qimenProgress >= 4) {
+          const reward = qimenReward();
+          gain(reward);
+          state.qimenTarget = makeQimenTarget();
+          state.qimenProgress = 0;
+          setMessage(`奇門遁甲成功，獲得 ${formatNumber(reward)} 隻箭矢。`, false);
+        } else {
+          setMessage(`口令命中，當前進度 ${state.qimenProgress}/4。`, false);
+        }
+      } else {
+        state.qimenProgress = 0;
+        setMessage("口令中斷，進度已重置。", true);
+      }
+      saveGame();
+      updateUI();
+    });
+
+    EL.unlockAltarBtn.addEventListener("click", () => {
+      setMessage("天壇會在持有達到 2,000,000 隻箭矢時自動解鎖。", true);
+    });
+
+    EL.upgradeAltarBtn.addEventListener("click", () => {
+      if (!state.altarUnlocked) return;
+      const cost = formulaCost(UPGRADE_BASE_COSTS.altar, state.altarLevel);
+      if (!afford(cost)) {
+        setMessage("箭矢不足，無法升級天壇。", true);
+        return;
+      }
+      spend(cost);
+      state.altarLevel += 1;
+      setMessage("天壇升級成功。", false);
+      saveGame();
+      updateUI();
+    });
+
+    EL.altarRing.addEventListener("pointerdown", (event) => {
+      if (!state.altarUnlocked) return;
+      const rect = EL.altarField.getBoundingClientRect();
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
+      state.altarDragOffsetX = state.altarCursorX - pointerX;
+      state.altarDragOffsetY = state.altarCursorY - pointerY;
+      state.altarDragging = true;
+      state.altarDragPointerId = event.pointerId;
+      EL.altarRing.setPointerCapture(event.pointerId);
+      setAltarCursorFromClient(event.clientX, event.clientY);
+      updateUI();
+    });
+
+    EL.altarRing.addEventListener("pointermove", (event) => {
+      if (!state.altarUnlocked) return;
+      if (!state.altarDragging || state.altarDragPointerId !== event.pointerId) return;
+      setAltarCursorFromClient(event.clientX, event.clientY);
+      updateUI();
+    });
+
+    function stopAltarDrag(event) {
+      if (!state.altarDragging || state.altarDragPointerId !== event.pointerId) return;
+      state.altarDragging = false;
+      state.altarDragPointerId = null;
+      state.altarDragOffsetX = 0;
+      state.altarDragOffsetY = 0;
+      try {
+        EL.altarRing.releasePointerCapture(event.pointerId);
+      } catch (e) {}
+      updateUI();
+    }
+
+    EL.altarRing.addEventListener("pointerup", stopAltarDrag);
+    EL.altarRing.addEventListener("pointercancel", stopAltarDrag);
+    EL.altarRing.addEventListener("lostpointercapture", () => {
+      if (!state.altarDragging) return;
+      state.altarDragging = false;
+      state.altarDragPointerId = null;
+      state.altarDragOffsetX = 0;
+      state.altarDragOffsetY = 0;
       updateUI();
     });
 
@@ -914,6 +1325,18 @@
           lusuUnlocked: state.lusuUnlocked, lusuLevel: state.lusuLevel,
           boatUnlocked: state.boatUnlocked, boatLevel: state.boatLevel,
           windUnlocked: state.windUnlocked, windLevel: state.windLevel,
+          qimenUnlocked: state.qimenUnlocked, qimenLevel: state.qimenLevel,
+          qimenTarget: state.qimenTarget, qimenProgress: state.qimenProgress,
+          altarUnlocked: state.altarUnlocked, altarLevel: state.altarLevel,
+          altarStarX: state.altarStarX,
+          altarStarY: state.altarStarY,
+          altarDirX: state.altarDirX,
+          altarDirY: state.altarDirY,
+          altarCursorX: state.altarCursorX,
+          altarCursorY: state.altarCursorY,
+          altarFieldW: state.altarFieldW,
+          altarFieldH: state.altarFieldH,
+          altarAccumulator: state.altarAccumulator,
           startTime: state.startTime,
           firstMilestoneMs: state.firstMilestoneMs
         };
@@ -932,11 +1355,21 @@
             "lusuUnlocked", "lusuLevel",
             "boatUnlocked", "boatLevel",
             "windUnlocked", "windLevel",
+            "qimenUnlocked", "qimenLevel",
+            "qimenTarget", "qimenProgress",
+            "altarUnlocked", "altarLevel",
+            "altarStarX", "altarStarY", "altarDirX", "altarDirY",
+            "altarCursorX", "altarCursorY", "altarFieldW", "altarFieldH",
+            "altarAccumulator",
             "startTime", "firstMilestoneMs"
           ];
           keys.forEach(k => { if (save[k] !== undefined) state[k] = save[k]; });
         }
       } catch (e) {}
+
+      if (!state.qimenTarget || state.qimenTarget.length !== 4) {
+        state.qimenTarget = makeQimenTarget();
+      }
       // Gold-finger cheat: localStorage.setItem('arrows', '...')
       try {
         const cheat = localStorage.getItem("arrows");
@@ -1012,6 +1445,46 @@
           gain(whole);
           state.windAccumulator -= whole;
         }
+      }
+
+      if (state.altarUnlocked) {
+        syncAltarSize();
+        const dtSec = capped / 1000;
+        const w = state.altarFieldW;
+        const h = state.altarFieldH;
+
+        state.altarStarX += state.altarDirX * ALTAR_STAR_SPEED_PER_SEC * dtSec;
+        state.altarStarY += state.altarDirY * ALTAR_STAR_SPEED_PER_SEC * dtSec;
+
+        if (state.altarStarX <= 0) {
+          state.altarStarX = 0;
+          state.altarDirX = Math.abs(state.altarDirX);
+        } else if (state.altarStarX >= w) {
+          state.altarStarX = w;
+          state.altarDirX = -Math.abs(state.altarDirX);
+        }
+
+        if (state.altarStarY <= 0) {
+          state.altarStarY = 0;
+          state.altarDirY = Math.abs(state.altarDirY);
+        } else if (state.altarStarY >= h) {
+          state.altarStarY = h;
+          state.altarDirY = -Math.abs(state.altarDirY);
+        }
+
+        const dx = state.altarStarX - state.altarCursorX;
+        const dy = state.altarStarY - state.altarCursorY;
+        const inside = dx * dx + dy * dy <= ALTAR_RING_RADIUS * ALTAR_RING_RADIUS;
+        state.altarCurrentRate = inside ? altarReward() : 0;
+        state.altarAccumulator += state.altarCurrentRate * dtSec;
+
+        if (state.altarAccumulator >= 1) {
+          const whole = Math.floor(state.altarAccumulator);
+          gain(whole);
+          state.altarAccumulator -= whole;
+        }
+      } else {
+        state.altarCurrentRate = 0;
       }
 
       updateUI();
